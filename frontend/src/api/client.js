@@ -57,8 +57,7 @@ export function createProfile({ name, role }) {
 // ---------------------------------------------------------------------------
 // Assignments / Questions - backend confirmed (routers/assignments.py).
 // POST endpoints are multipart/form-data (title/deadline/etc as fields,
-// files as File) because both also take an optional file - see
-// assignments.py's own note on why JSON bodies don't work here.
+// files as File) because both also take an optional file.
 // ---------------------------------------------------------------------------
 
 export function getAssignments() {
@@ -92,17 +91,15 @@ export function createQuestion(assignmentId, { number, description, aiReferenceF
 }
 
 // ---------------------------------------------------------------------------
-// Submissions - routers/submissions.py is still an empty stub (ISSUES.md
-// #7, not yet built). These match the endpoint paths/methods specified
-// there; the upload field name ("file") is this file's assumption, not
-// something a real backend has confirmed yet - whoever builds
-// submissions.py needs to read the file under this same form field name,
-// or this and that file will need updating together.
+// Submissions - routers/submissions.py (ISSUES.md #7).
+// `language` is required by the backend as a form field ("c" or "cpp").
+// The previous stub was missing it — fixed here.
 // ---------------------------------------------------------------------------
 
-export function uploadSubmission(questionId, file) {
+export function uploadSubmission(questionId, file, language) {
   const form = new FormData();
   form.append("file", file);
+  form.append("language", language); // required by routers/submissions.py
 
   return authFetch(`/questions/${questionId}/submissions`, {
     method: "POST",
@@ -115,9 +112,7 @@ export function getMySubmission(questionId) {
 }
 
 // ---------------------------------------------------------------------------
-// Flags - routers/flags.py is still an empty stub (ISSUES.md #11, not yet
-// built). These match the endpoint paths/methods/status-shape specified
-// there ("run-analysis returns immediately, 202-style").
+// Flags - routers/flags.py (ISSUES.md #11).
 // ---------------------------------------------------------------------------
 
 export function runAnalysis(questionId) {

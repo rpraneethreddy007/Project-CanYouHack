@@ -1,20 +1,18 @@
-// Router setup. Professor/TA-only and Student-only pages get added inside
-// their respective RoleGuard as they're built - do not add a route without
-// wrapping it in RoleGuard if it's not Login/Signup.
+// Router setup. All role-guarded routes wrapped in RoleGuard.
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RoleGuard from "./components/RoleGuard";
 
-// Placeholder dashboards until ProfessorDashboard.jsx / StudentDashboard.jsx
-// are built for real (see ISSUES.md #16, #17) - kept here so routing and
-// auth can be tested end-to-end before those pages exist.
-function ProfessorDashboardPlaceholder() {
-  return <div className="p-6 text-slate-100">Professor/TA dashboard - coming soon.</div>;
-}
-function StudentDashboardPlaceholder() {
-  return <div className="p-6 text-slate-100">Student dashboard - coming soon.</div>;
-}
+// Professor/TA pages
+import ProfessorDashboard from "./pages/ProfessorDashboard";
+import AssignmentCreate from "./pages/AssignmentCreate";
+import FlaggedStudents from "./pages/FlaggedStudents";
+import DiffViewer from "./pages/DiffViewer";
+
+// Student pages
+import StudentDashboard from "./pages/StudentDashboard";
+import QuestionDetail from "./pages/QuestionDetail";
 
 export default function App() {
   return (
@@ -24,19 +22,54 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
+        {/* Professor / TA routes */}
         <Route
           path="/professor/dashboard"
           element={
             <RoleGuard allow={["professor", "ta"]}>
-              <ProfessorDashboardPlaceholder />
+              <ProfessorDashboard />
             </RoleGuard>
           }
         />
         <Route
+          path="/professor/assignments/new"
+          element={
+            <RoleGuard allow={["professor", "ta"]}>
+              <AssignmentCreate />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/professor/questions/:questionId/flags"
+          element={
+            <RoleGuard allow={["professor", "ta"]}>
+              <FlaggedStudents />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/professor/questions/:questionId/flags/:flagId/diff"
+          element={
+            <RoleGuard allow={["professor", "ta"]}>
+              <DiffViewer />
+            </RoleGuard>
+          }
+        />
+
+        {/* Student routes */}
+        <Route
           path="/student/dashboard"
           element={
             <RoleGuard allow={["student"]}>
-              <StudentDashboardPlaceholder />
+              <StudentDashboard />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/student/questions/:questionId"
+          element={
+            <RoleGuard allow={["student"]}>
+              <QuestionDetail />
             </RoleGuard>
           }
         />
