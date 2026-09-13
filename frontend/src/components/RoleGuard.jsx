@@ -5,17 +5,19 @@
 // component is what makes that true, since it runs on every render of the
 // protected page, independent of how the user navigated there.
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { getMe } from "../api/client";
 
 export default function RoleGuard({ allow, children }) {
   const [status, setStatus] = useState("loading"); // loading | ok | unauthenticated | forbidden
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     getMe()
       .then((profile) => {
         if (cancelled) return;
+        setRole(profile.role);
         setStatus(allow.includes(profile.role) ? "ok" : "forbidden");
       })
       .catch(() => {
@@ -27,15 +29,30 @@ export default function RoleGuard({ allow, children }) {
   }, [allow]);
 
   if (status === "loading") {
-    return <div className="min-h-screen bg-slate-900" />; // avoid a flash of wrong content
+    // A quiet placeholder rather than a flash of the wrong page - kept
+    // deliberately understated (no spinner-as-decoration) since this is
+    // normally on screen for a fraction of a second.
+    return <div className="min-h-screen bg-paper" />;
   }
   if (status === "unauthenticated") {
     return <Navigate to="/login" replace />;
   }
   if (status === "forbidden") {
+    const isStaff = role === "professor" || role === "ta";
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100">
-        <p>403 - you don't have access to this page.</p>
+      <div className="min-h-screen flex items-center justify-center bg-paper px-6">
+        <div className="max-w-sm text-center">
+          <p className="font-display text-5xl font-extrabold text-ink-faint mb-4">403</p>
+          <h1 className="text-xl font-semibold text-ink mb-2">This page isn't for your role</h1>
+          <p className="text-ink-soft mb-6">
+            {isStaff
+              ? "This area is for students."
+              : "This area is for professors and teaching assistants."}
+          </p>
+          <Link to={isStaff ? "/professor/dashboard" : "/student/dashboard"} className="btn-primary">
+            Go to your dashboard
+          </Link>
+        </div>
       </div>
     );
   }

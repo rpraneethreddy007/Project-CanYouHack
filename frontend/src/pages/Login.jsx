@@ -2,7 +2,8 @@
 // FILE_WORKING_GUIDE.md - "use their JS client directly here rather than
 // routing through your own backend for login/signup"). After a successful
 // login, calls our own backend's /auth/me to find the user's role, then
-// redirects accordingly.
+// redirects accordingly: professor/TA -> /professor/dashboard,
+// student -> /student/dashboard.
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../api/supabaseClient";
@@ -26,68 +27,151 @@ export default function Login() {
     });
 
     if (authError) {
-      setError(authError.message);
+      setError(
+        authError.message === "Invalid login credentials"
+          ? "That email and password don't match our records."
+          : authError.message
+      );
       setLoading(false);
       return;
     }
 
     try {
       const profile = await getMe();
-      if (profile.role === "professor" || profile.role === "ta") {
-        navigate("/professor/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
-    } catch (err) {
+      navigate(
+        profile.role === "professor" || profile.role === "ta"
+          ? "/professor/dashboard"
+          : "/student/dashboard"
+      );
+    } catch {
       // Logged into Supabase but no profile row yet - signup flow was
       // interrupted. Send them back to finish signup rather than a dead end.
-      setError("Account exists but profile is incomplete. Please sign up again.");
-      navigate("/signup");
-    } finally {
+      setError("Your account exists but setup didn't finish. Please sign up again.");
       setLoading(false);
+      navigate("/signup");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-slate-800 p-8 rounded-xl w-80 text-slate-100"
+    <div className="min-h-screen grid md:grid-cols-2 bg-paper">
+      {/* Brand panel - hidden below md so the form is never pushed below
+          the fold on a phone. Ruled-notebook texture ties visually to
+          "coursework" without leaning on a stock illustration. */}
+      <BrandPanel />
+
+      <div className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm">
+          <div className="md:hidden mb-8">
+            <Wordmark dark={false} />
+          </div>
+
+          <h1 className="text-2xl font-bold text-ink mb-1">Welcome back</h1>
+          <p className="text-ink-soft mb-8">Sign in to continue to your dashboard.</p>
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="mb-4">
+              <label htmlFor="email" className="field-label">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="field-input"
+                placeholder="you@college.edu"
+              />
+            </div>
+
+            <div className="mb-2">
+              <label htmlFor="password" className="field-label">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="field-input"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {error && (
+              <p role="alert" className="mt-3 text-sm text-brick">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" disabled={loading} className="btn-primary w-full mt-6">
+              {loading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+
+          <p className="text-sm text-ink-soft text-center mt-8">
+            New here?{" "}
+            <Link to="/signup" className="font-medium text-cobalt hover:text-cobalt-dark">
+              Create an account
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Wordmark({ dark }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span
+        className={`grid h-8 w-8 place-items-center rounded-md font-display text-sm font-extrabold ${
+          dark ? "bg-white text-ink" : "bg-ink text-white"
+        }`}
       >
-        <h1 className="text-lg font-semibold mb-4">DSA Portal - Login</h1>
+        DP
+      </span>
+      <span className={`font-display text-lg font-bold ${dark ? "text-white" : "text-ink"}`}>
+        DSA Portal
+      </span>
+    </div>
+  );
+}
 
-        <label className="block text-sm text-slate-400 mt-3 mb-1">Email</label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 rounded bg-slate-900 border border-slate-700"
-        />
+function BrandPanel() {
+  return (
+    <div className="hidden md:flex relative flex-col justify-between overflow-hidden bg-ink px-12 py-12 text-white">
+      {/* Ruled-paper texture: faint horizontal lines like a notebook page,
+          rendered once as a background pattern rather than per-element
+          borders - a nod to coursework without an off-the-shelf hero image. */}
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.08]"
+      >
+        <defs>
+          <pattern id="rule-lines" width="100%" height="32" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="31.5" x2="100%" y2="31.5" stroke="white" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#rule-lines)" />
+      </svg>
 
-        <label className="block text-sm text-slate-400 mt-3 mb-1">Password</label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 rounded bg-slate-900 border border-slate-700"
-        />
+      <Wordmark dark />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full mt-5 py-2 rounded bg-indigo-600 hover:bg-indigo-500 font-semibold disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Log in"}
-        </button>
-
-        {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
-
-        <p className="text-sm text-center mt-4">
-          No account? <Link to="/signup" className="text-indigo-400">Sign up</Link>
+      <div className="relative max-w-sm">
+        <h2 className="font-display text-3xl font-bold leading-snug">
+          Assignments, submissions, and integrity checks, in one place.
+        </h2>
+        <p className="mt-4 text-white/70">
+          Post problems, collect code, and see who needs a closer look —
+          without spreadsheets or group chats.
         </p>
-      </form>
+      </div>
+
+      <p className="relative text-sm text-white/50">For instructors, TAs, and students.</p>
     </div>
   );
 }

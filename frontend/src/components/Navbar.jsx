@@ -7,13 +7,13 @@ import { supabase } from "../api/supabaseClient";
 import { getMe } from "../api/client";
 
 export default function Navbar() {
-  const [role, setRole] = useState(null);
+  const [profile, setProfile] = useState(null); // { name, role } | null
   const navigate = useNavigate();
 
   useEffect(() => {
     getMe()
-      .then((p) => setRole(p.role))
-      .catch(() => setRole(null));
+      .then(setProfile)
+      .catch(() => setProfile(null));
   }, []);
 
   async function handleLogout() {
@@ -21,19 +21,47 @@ export default function Navbar() {
     navigate("/login");
   }
 
-  const isStaff = role === "professor" || role === "ta";
+  const isStaff = profile?.role === "professor" || profile?.role === "ta";
+  const dashboardPath = isStaff ? "/professor/dashboard" : "/student/dashboard";
 
   return (
-    <nav className="flex justify-between items-center px-6 py-3 bg-slate-800 text-slate-100">
-      <div className="flex gap-4 text-sm">
-        <Link to={isStaff ? "/professor/dashboard" : "/student/dashboard"}>Dashboard</Link>
-        {isStaff && <Link to="/professor/flags">Flagged Students</Link>}
+    <nav className="sticky top-0 z-10 border-b border-paper-line bg-white/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+        <Link to={dashboardPath} className="flex items-center gap-2.5">
+          <span className="grid h-7 w-7 place-items-center rounded-md bg-ink font-display text-xs font-extrabold text-white">
+            DP
+          </span>
+          <span className="font-display text-base font-bold text-ink">DSA Portal</span>
+        </Link>
+
+        <div className="flex items-center gap-6">
+          {profile && (
+            <Link
+              to={dashboardPath}
+              className="text-sm font-medium text-ink-soft hover:text-ink"
+            >
+              {isStaff ? "Assignments" : "My assignments"}
+            </Link>
+          )}
+
+          {profile && (
+            <div className="flex items-center gap-3 border-l border-paper-line pl-6">
+              <div className="text-right leading-tight">
+                <p className="text-sm font-medium text-ink">{profile.name}</p>
+                <p className="text-xs capitalize text-ink-faint">
+                  {profile.role === "ta" ? "Teaching Assistant" : profile.role}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-paper-line px-3 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+              >
+                Log out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      {role && (
-        <button onClick={handleLogout} className="text-sm px-3 py-1 rounded bg-slate-700 hover:bg-slate-600">
-          Log out
-        </button>
-      )}
     </nav>
   );
 }

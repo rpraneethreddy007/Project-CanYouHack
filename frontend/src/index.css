@@ -1,3 +1,54 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&family=IBM+Plex+Mono:wght@500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-ink;
+  }
+  /* Visible keyboard focus everywhere, not just on inputs the browser
+     defaults to - matters for a form-heavy academic tool. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-cobalt ring-offset-2 ring-offset-paper;
+  }
+}
+
+/* Small, shared building blocks so Login/Signup/Dashboard/AssignmentCreate
+   don't each reinvent slightly-different input/button/card styling. Kept
+   intentionally minimal - these are the load-bearing patterns repeated
+   three or more times across the six files, not a full component kit. */
+@layer components {
+  .field-label {
+    @apply block text-sm font-medium text-ink-soft mb-1.5;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-paper-line bg-white px-3.5 py-2.5
+      text-[15px] text-ink placeholder:text-ink-faint
+      transition-colors focus:border-cobalt;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-ink
+      px-4 py-2.5 text-[15px] font-semibold text-white transition-colors
+      hover:bg-cobalt-dark disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border
+      border-paper-line bg-white px-4 py-2.5 text-[15px] font-semibold
+      text-ink transition-colors hover:border-ink-faint
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .surface-card {
+    @apply rounded-xl border border-paper-line bg-white;
+  }
+}
